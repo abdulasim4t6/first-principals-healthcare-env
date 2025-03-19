@@ -1,0 +1,61 @@
+## requirements-dev.txt: dependencies for local development.
+##
+## For defining dependencies used by jobs in Databricks Workflows, see
+## https://docs.databricks.com/dev-tools/bundles/library-dependencies.html
+
+# Development requirements for the Healthcare Project
+
+# Databricks dependencies
+databricks-cli>=0.17.0
+databricks-connect>=13.3
+databricks-dlt
+
+# Apache Spark and Delta Lake
+pyspark>=3.3.0
+delta-spark>=2.2.0
+
+# Machine Learning
+mlflow>=2.6.0
+scikit-learn>=1.2.2
+numpy>=1.22.0
+pandas>=1.5.0
+
+# Testing
+pytest>=7.0.0
+pytest-cov>=4.0.0
+
+# Code quality
+black>=23.0.0
+isort>=5.12.0
+flake8>=6.0.0
+mypy>=1.0.0
+
+# Documentation
+sphinx>=6.0.0
+sphinx-rtd-theme>=1.2.0
+
+# Dependencies for building wheel files
+setuptools
+wheel
+
+# Project dependencies
+python-dotenv>=1.0.0
+pydantic>=2.0.0
+
+## pytest is the default package used for testing
+pytest
+
+## databricks-connect can be used to run parts of this project locally.
+## See https://docs.databricks.com/dev-tools/databricks-connect.html.
+##
+## databricks-connect is automatically installed if you're using Databricks
+## extension for Visual Studio Code
+## (https://docs.databricks.com/dev-tools/vscode-ext/dev-tasks/databricks-connect.html).
+##
+## To manually install databricks-connect, either follow the instructions
+## at https://docs.databricks.com/dev-tools/databricks-connect.html
+## to install the package system-wide. Or uncomment the line below to install a
+## version of db-connect that corresponds to the Databricks Runtime version used
+## for this project.
+#
+# databricks-connect>=15.4,<15.5

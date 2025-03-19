@@ -1,0 +1,49 @@
+# This file defines the Databricks jobs for the healthcare project.
+# For details about configuration options for Workflows jobs, see:
+# https://docs.databricks.com/dev-tools/bundles/jobs.html
+
+resources:
+  jobs:
+    healthcare_daily_etl:
+      name: "Healthcare Daily ETL Job"
+      schedule:
+        quartz_cron_expression: "0 0 2 * * ?"
+        timezone_id: "America/Los_Angeles"
+      tasks:
+        - task_key: etl_task
+          notebook_task:
+            notebook_path: "/Repos/abdulaleemasim4t6@gmail.com/first-principals-healthcare-env/notebooks/etl/run_etl"
+            base_parameters:
+              env: "${bundle.target}"
+          job_cluster_key: etl_cluster
+          timeout_seconds: 3600
+      job_clusters:
+        - job_cluster_key: etl_cluster
+          new_cluster:
+            spark_version: 13.3.x-scala2.12
+            node_type_id: i3.xlarge
+            num_workers: 2
+            aws_attributes:
+              availability: SPOT
+
+    healthcare_ml_training:
+      name: "Healthcare ML Training Job"
+      schedule:
+        quartz_cron_expression: "0 0 4 ? * MON"
+        timezone_id: "America/Los_Angeles"
+      tasks:
+        - task_key: ml_task
+          notebook_task:
+            notebook_path: "/Repos/abdulaleemasim4t6@gmail.com/first-principals-healthcare-env/notebooks/ml/train_model"
+            base_parameters:
+              env: "${bundle.target}"
+          job_cluster_key: ml_cluster
+          timeout_seconds: 7200
+      job_clusters:
+        - job_cluster_key: ml_cluster
+          new_cluster:
+            spark_version: 13.3.x-scala2.12
+            node_type_id: i3.xlarge
+            num_workers: 2
+            aws_attributes:
+              availability: SPOT

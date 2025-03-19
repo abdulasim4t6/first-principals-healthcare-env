@@ -1,0 +1,126 @@
+# The main job for first_principles_healthcare_env.
+resources:
+  jobs:
+    first_principles_healthcare_env_job:
+      name: first_principles_healthcare_env_job
+
+      trigger:
+        # Run this job every day, exactly one day from the last run; see https://docs.databricks.com/api/workspace/jobs/create#trigger
+        periodic:
+          interval: 1
+          unit: DAYS
+
+      email_notifications:
+        on_failure:
+          - abdulaleemasim4t6@gmail.com
+
+      tasks:
+        - task_key: notebook_task
+          job_cluster_key: job_cluster
+          notebook_task:
+            notebook_path: ../src/notebook.ipynb
+
+        - task_key: refresh_pipeline
+          depends_on:
+            - task_key: notebook_task
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.first_principles_healthcare_env_pipeline.id}
+
+        - task_key: main_task
+          depends_on:
+            - task_key: refresh_pipeline
+          job_cluster_key: job_cluster
+          python_wheel_task:
+            package_name: first_principles_healthcare_env
+            entry_point: main
+          libraries:
+            # By default we just include the .whl file generated for the first_principles_healthcare_env package.
+            # See https://docs.databricks.com/dev-tools/bundles/library-dependencies.html
+            # for more information on how to add other libraries.
+            - whl: ../dist/*.whl
+
+      job_clusters:
+        - job_cluster_key: job_cluster
+          new_cluster:
+            spark_version: 15.4.x-scala2.12
+            node_type_id: i3.xlarge
+            data_security_mode: SINGLE_USER
+            autoscale:
+              min_workers: 1
+              max_workers: 4
+
+    first_principles_healthcare_env_daily_etl:
+      name: "Healthcare Daily ETL Job"
+      job_clusters:
+        - job_cluster_key: etl_cluster
+          new_cluster:
+            spark_version: 13.3.x-scala2.12
+            node_type_id: i3.xlarge
+            num_workers: 2
+            aws_attributes:
+              availability: SPOT
+            spark_conf:
+              spark.databricks.delta.preview.enabled: true
+      tasks:
+        - task_key: patients_etl
+          job_cluster_key: etl_cluster
+          python_wheel_task:
+            package_name: first_principles_healthcare_env
+            entry_point: jobs.daily_etl_job
+            parameters: ["--env", "${bundle.target}"]
+          libraries:
+            - pypi:
+                package: delta-spark
+            - pypi:
+                package: mlflow
+            - pypi:
+                package: scikit-learn
+          timeout_seconds: 3600
+          email_notifications:
+            on_failure: ["abdulaleemasim4t6@gmail.com"]
+      schedule:
+        quartz_cron_expression: "0 0 2 * * ?" # Run daily at 2 AM
+        timezone_id: "America/Los_Angeles"
+        pause_status: "UNPAUSED"
+      max_concurrent_runs: 1
+
+    first_principles_healthcare_env_ml_training:
+      name: "Healthcare ML Training Job"
+      job_clusters:
+        - job_cluster_key: ml_cluster
+          new_cluster:
+            spark_version: 13.3.x-scala2.12
+            node_type_id: i3.xlarge
+            num_workers: 2
+            aws_attributes:
+              availability: SPOT
+            spark_conf:
+              spark.databricks.delta.preview.enabled: true
+            spark_env_vars:
+              PYSPARK_PYTHON: /databricks/python3/bin/python3
+      tasks:
+        - task_key: train_ml_model
+          job_cluster_key: ml_cluster
+          python_wheel_task:
+            package_name: first_principles_healthcare_env
+            entry_point: jobs.ml_training_job
+            parameters: ["--env", "${bundle.target}"]
+          libraries:
+            - pypi:
+                package: delta-spark
+            - pypi:
+                package: mlflow
+            - pypi:
+                package: scikit-learn
+            - pypi:
+                package: numpy
+            - pypi:
+                package: pandas
+          timeout_seconds: 7200
+          email_notifications:
+            on_failure: ["abdulaleemasim4t6@gmail.com"]
+      schedule:
+        quartz_cron_expression: "0 0 4 ? * MON" # Run every Monday at 4 AM
+        timezone_id: "America/Los_Angeles"
+        pause_status: "UNPAUSED"
+      max_concurrent_runs: 1

@@ -1,0 +1,13 @@
+# The main pipeline for first_principles_healthcare_env
+resources:
+  pipelines:
+    first_principles_healthcare_env_pipeline:
+      name: first_principles_healthcare_env_pipeline
+      catalog: workspace
+      target: first_principles_healthcare_env_${bundle.target}
+      libraries:
+        - notebook:
+            path: ../src/dlt_pipeline.ipynb
+
+      configuration:
+        bundle.sourcePath: ${workspace.file_path}/src

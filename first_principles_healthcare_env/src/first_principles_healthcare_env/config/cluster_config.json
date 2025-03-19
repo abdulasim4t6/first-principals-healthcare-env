@@ -1,0 +1,13 @@
+{
+    "cluster_name": "aws-databricks-cluster",
+    "spark_version": "13.3.x-scala2.12",
+    "node_type_id": "m5d.xlarge",
+    "autoscale": {
+        "min_workers": 2,
+        "max_workers": 8
+    },
+    "autotermination_minutes": 60,
+    "spark_env_vars": {
+        "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+    }
+}
